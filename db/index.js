@@ -121,29 +121,54 @@ const getPostsByUser = async (userId) => {
 
 const getUserById = async (userId) => {
     try {
-      const { rows } = await pool.query(`
+      const {
+        rows: [user],
+      } = await pool.query(`
       SELECT id, username, name, location, active
       FROM users
-      WHERE id=$1;`
-      , [userId])
+      WHERE id=${userId}
+    `);
 
-      
-      if (!rows.length) {
+      if (!user) {
         return null;
-      } else {
-        const addPosts = await getPostsByUser(userId);
-
-        let userObject = {
-          ...rows,
-          posts: addPosts,
-        };
-        console.log(userObject);
-      return userObject;
       }
 
+      user.posts = await getPostsByUser(userId);
+
+      return user;
     } catch (error) {
       throw error;
     }
 }
 
+const createTags = async (tagList) => {
+  if (tagList.length === 0) {
+    return;
+  }
+
+  const insertValues = tagList.map((_, index) => `$${index + 1}`).join("), (");
+
+  const selectValues = tagList.map((_, index) => `$${index + 1}`).join(", ");
+  try {
+    await pool.query(`
+    INSERT INTO tags (name) 
+    VALUES (${insertValues})
+    ON CONFLICT (name) DO NOTHING;`,
+    tagList)
+
+    const { rows } = await pool.query(`
+    SELECT * FROM tags
+    WHERE name
+    IN (${selectValues});`, 
+    tagList)
+    console.log(rows)
+    return rows;
+
+
+  } catch (error) {
+    throw error;
+  }
+}
+
+createTags(["#fisrt", "#best", "#glory-days"])
 module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser, getUserById };

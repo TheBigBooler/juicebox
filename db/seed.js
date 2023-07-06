@@ -51,19 +51,19 @@ const createInitialUsers = async () => {
     try {
         console.log("Starting to create users...");
 
-        const albert = await createUser({
+        await createUser({
             username: 'albert', 
             password: 'bertie99',
             name: 'Albert',
             location: "California"
         });
-        const sandra = await createUser({
+        await createUser({
           username: "sandra",
           password: "2sandy4me",
           name: "Sandra Bullock",
           location: "Alaska"
         });
-        const glamgal = await createUser({
+        await createUser({
           username: "glamgal",
           password: "soglam",
           name: "Fergie",
@@ -86,7 +86,7 @@ const dropTables = async () => {
         console.log("Dropping tables...");
         
         await pool.query(`
-        DROP TABLE IF EXISTS posts, users;
+        DROP TABLE IF EXISTS post_tags, tags, posts, users;
         `);
 
         console.log("Finished dropping tables!");
@@ -117,7 +117,16 @@ const createTables = async () => {
             content TEXT NOT NULL,
             active BOOLEAN DEFAULT true
         );
-        `);        
+        `);
+    await pool.query(`
+    CREATE TABLE tags (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) UNIQUE NOT NULL
+    );
+    CREATE TABLE post_tags (
+        "postId" INTEGER REFERENCES posts(id) UNIQUE,
+        "tagId" INTEGER REFERENCES tags(id) UNIQUE
+    ); `)        
 
         console.log("Finished building tables!");
   } catch (error) {
