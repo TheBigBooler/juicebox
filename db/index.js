@@ -171,4 +171,4 @@ const createTags = async (tagList) => {
 }
 
 createTags(["#fisrt", "#best", "#glory-days"])
-module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser, getUserById };
+module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser, getUserById, createTags };
