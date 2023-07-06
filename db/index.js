@@ -99,7 +99,7 @@ async function updatePost(id, fields = {}) {
 
 const getAllPosts = async () => {
   const { rows } = await pool.query(
-    `SELECT "authorId", title, content
+    `SELECT id, "authorId", title, content
         FROM posts;`
   );
   return rows;
@@ -120,8 +120,30 @@ const getPostsByUser = async (userId) => {
 }
 
 const getUserById = async (userId) => {
-  
+    try {
+      const { rows } = await pool.query(`
+      SELECT id, username, name, location, active
+      FROM users
+      WHERE id=$1;`
+      , [userId])
+
+      
+      if (!rows.length) {
+        return null;
+      } else {
+        const addPosts = await getPostsByUser(userId);
+
+        let userObject = {
+          ...rows,
+          posts: addPosts,
+        };
+        console.log(userObject);
+      return userObject;
+      }
+
+    } catch (error) {
+      throw error;
+    }
 }
 
-
-module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser };
+module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser, getUserById };

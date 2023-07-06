@@ -1,17 +1,44 @@
-const { pool, getAllUsers, createUser, updateUser } = require('./index');
+const {
+  pool,
+  getAllUsers,
+  createUser,
+  updateUser,
+  createPost,
+  updatePost,
+  getAllPosts,
+  getPostsByUser,
+  getUserById,
+} = require("./index");
 
 const testDB = async () => {
     try {
+        //get all users
         console.log('Starting to test database...');
         const users = await getAllUsers();
         console.log("getAllUsers:", users);
-
+        //update user
         console.log("Calling updateUser on users[0]");
         const updateUserResult = await updateUser(users[0].id, {
             name: "Newname Sogood",
             location: "Lesterville, KY"
         });
         console.log("Update user:", updateUserResult);
+        //get all posts
+        console.log("Calling getAllPosts");
+        const posts = await getAllPosts();
+        console.log("Result:", posts);
+        //update post
+        console.log("Calling updatePost on posts[0]");
+        const updatePostResult = await updatePost(posts[0].id, {
+            title: "New Title",
+            content: "Updated Content"
+        });
+        console.log("Result:", updatePostResult)
+        //get user by ID
+        console.log("Calling getUserById with 1");
+        const albert = await getUserById(1);
+        console.log("Result:", albert);
+
 
         console.log("Finished database test");
     } catch (error) {
@@ -57,10 +84,9 @@ const createInitialUsers = async () => {
 const dropTables = async () => {
     try {
         console.log("Dropping tables...");
-
+        
         await pool.query(`
-        DROP TABLE IF EXISTS posts;
-        DROP TABLE IF EXISTS users;
+        DROP TABLE IF EXISTS posts, users;
         `);
 
         console.log("Finished dropping tables!");
@@ -100,11 +126,37 @@ const createTables = async () => {
   }
 };
 
+const createInitialPosts = async () => {
+    try {
+        const [albert, sandra, glamgal] = await getAllUsers();
+
+        await createPost({
+            authorId: albert.id,
+            title: "First Post",
+            content: "This is my first post!"
+        });
+        await createPost({
+          authorId: sandra.id,
+          title: "Sandy Beaches",
+          content: "I love going to the beach, It's the best!",
+        });
+        await createPost({
+          authorId: glamgal.id,
+          title: "Fab",
+          content: "slay queen yasss",
+        });
+
+    } catch (error) {
+        throw error;
+    }
+}
+
 const rebuildDB = async () => {
     try {
         await dropTables();
         await createTables();
         await createInitialUsers();
+        await createInitialPosts();
     } catch (error) {
         console.error(error)
     }
