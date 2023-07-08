@@ -1,5 +1,5 @@
 require('dotenv').config();
-const PORT = 3000;
+const SERVER_PORT = process.env.SERVER_PORT
 const express = require("express");
 const server = express();
 const morgan = require("morgan");
@@ -20,6 +20,6 @@ const apiRouter = require("./api");
 server.use("/api", apiRouter);
 
 
-server.listen(PORT, () => {
-  console.log("Server is running on port", PORT);
+server.listen(SERVER_PORT, () => {
+  console.log("Server is running on port", SERVER_PORT);
 });

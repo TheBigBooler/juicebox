@@ -1,11 +1,20 @@
+require("dotenv").config();
+const {
+  user,
+  host,
+  database,
+  password,
+  port
+} = process.env
+
 const Pool = require("pg").Pool;
 
 const pool = new Pool({
-  user: "me",
-  host: "localhost",
-  database: "juiceboxdev",
-  password: "Platypus123!",
-  port: 5432,
+  user: user,
+  host: host,
+  database: database,
+  password: password,
+  port: port,
 });
 
 const getAllUsers = async () => {
@@ -18,7 +27,9 @@ const getAllUsers = async () => {
 
 const createUser = async ({ username, password, name, location }) => {
   try {
-    const { rows: [ user ] } = await pool.query(
+    const {
+      rows: [user],
+    } = await pool.query(
       `
             INSERT INTO users (username, password, name, location) VALUES ($1, $2, $3, $4) ON CONFLICT (username) DO NOTHING RETURNING *;
         `,
@@ -33,9 +44,9 @@ const createUser = async ({ username, password, name, location }) => {
 
 async function updateUser(id, fields = {}) {
   // build the set string
-  const setString = Object.keys(fields).map(
-    (key, index) => `"${ key }"=$${ index + 1 }`
-  ).join(', ');
+  const setString = Object.keys(fields)
+    .map((key, index) => `"${key}"=$${index + 1}`)
+    .join(", ");
 
   // return early if this is called without fields
   if (setString.length === 0) {
@@ -43,12 +54,17 @@ async function updateUser(id, fields = {}) {
   }
 
   try {
-    const { rows: [ user ] } = await pool.query(`
+    const {
+      rows: [user],
+    } = await pool.query(
+      `
       UPDATE users
-      SET ${ setString }
+      SET ${setString}
       WHERE id=${id}
       RETURNING *;
-    `, Object.values(fields));
+    `,
+      Object.values(fields)
+    );
 
     return user;
   } catch (error) {
@@ -58,17 +74,20 @@ async function updateUser(id, fields = {}) {
 
 const createPost = async ({ authorId, title, content, tags = [] }) => {
   try {
-    const { rows: [ post ] } = await pool.query(
-    `INSERT INTO posts ("authorId", title, content) VALUES ($1, $2, $3) RETURNING *;`,
-    [authorId, title, content]);
+    const {
+      rows: [post],
+    } = await pool.query(
+      `INSERT INTO posts ("authorId", title, content) VALUES ($1, $2, $3) RETURNING *;`,
+      [authorId, title, content]
+    );
 
     const tagList = await createTags(tags);
 
     return await addTagsToPost(post.id, tagList);
   } catch (error) {
-    throw error; 
+    throw error;
   }
-}
+};
 
 async function updatePost(postId, fields = {}) {
   // read off the tags & remove that field
@@ -78,7 +97,7 @@ async function updatePost(postId, fields = {}) {
   // build the set string
   const setString = Object.keys(fields)
     .map((key, index) => `"${key}"=$${index + 1}`)
-    .join(', ');
+    .join(", ");
 
   try {
     // update any fields that need to be updated
@@ -101,7 +120,7 @@ async function updatePost(postId, fields = {}) {
 
     // make any new tags that need to be made
     const tagList = await createTags(tags);
-    const tagListIdString = tagList.map((tag) => `${tag.id}`).join(', ');
+    const tagListIdString = tagList.map((tag) => `${tag.id}`).join(", ");
 
     // delete any post_tags from the database which aren't in that tagList
     await pool.query(
@@ -162,54 +181,56 @@ async function getPostsByUser(userId) {
 }
 
 const getUserById = async (userId) => {
-    try {
-      const {
-        rows: [user],
-      } = await pool.query(`
+  try {
+    const {
+      rows: [user],
+    } = await pool.query(`
       SELECT id, username, name, location, active
       FROM users
       WHERE id=${userId}
     `);
 
-      if (!user) {
-        return null;
-      }
-
-      user.posts = await getPostsByUser(userId);
-      return user;
-    } catch (error) {
-      throw error;
+    if (!user) {
+      return null;
     }
-}
+
+    user.posts = await getPostsByUser(userId);
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
 
 const createTags = async (tagList) => {
   if (tagList.length === 0) {
     return;
   }
 
-  const insertValues = tagList.map((_, index) => `$${index + 1}`).join('), (');
+  const insertValues = tagList.map((_, index) => `$${index + 1}`).join("), (");
 
-  const selectValues = tagList.map((_, index) => `$${index + 1}`).join(', ');
+  const selectValues = tagList.map((_, index) => `$${index + 1}`).join(", ");
   try {
-    await pool.query(`
+    await pool.query(
+      `
     INSERT INTO tags (name) 
     VALUES (${insertValues})
     ON CONFLICT (name) DO NOTHING;`,
-    tagList)
+      tagList
+    );
 
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query(
+      `
     SELECT * FROM tags
     WHERE name
-    IN (${selectValues});`, 
-    tagList)
-    console.log(rows)
+    IN (${selectValues});`,
+      tagList
+    );
+    console.log(rows);
     return rows;
-
-
   } catch (error) {
     throw error;
   }
-}
+};
 
 async function createPostTag(postId, tagId) {
   try {
@@ -302,18 +323,18 @@ async function getPostsByTagName(tagName) {
   } catch (error) {
     throw error;
   }
-} 
+}
 
 const getAllTags = async () => {
   try {
-    const {rows} = await pool.query(`
-    SELECT * FROM tags`)
+    const { rows } = await pool.query(`
+    SELECT * FROM tags`);
 
     return rows;
   } catch (error) {
     throw error;
   }
-}
+};
 
 async function getUserByUsername(username) {
   try {
@@ -334,4 +355,21 @@ async function getUserByUsername(username) {
   }
 }
 
-module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser, getUserById, createTags, createPostTag, addTagsToPost, getPostById, getPostsByTagName, getAllTags, getUserByUsername };
+module.exports = {
+  pool,
+  getAllUsers,
+  createUser,
+  updateUser,
+  createPost,
+  updatePost,
+  getAllPosts,
+  getPostsByUser,
+  getUserById,
+  createTags,
+  createPostTag,
+  addTagsToPost,
+  getPostById,
+  getPostsByTagName,
+  getAllTags,
+  getUserByUsername,
+};
