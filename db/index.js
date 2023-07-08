@@ -304,4 +304,15 @@ async function getPostsByTagName(tagName) {
   }
 } 
 
-module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser, getUserById, createTags, createPostTag, addTagsToPost, getPostById, getPostsByTagName };
+const getAllTags = async () => {
+  try {
+    const {rows} = await pool.query(`
+    SELECT * FROM tags`)
+
+    return rows;
+  } catch (error) {
+    throw error;
+  }
+}
+
+module.exports = { pool, getAllUsers, createUser, updateUser, createPost, updatePost, getAllPosts, getPostsByUser, getUserById, createTags, createPostTag, addTagsToPost, getPostById, getPostsByTagName, getAllTags };
