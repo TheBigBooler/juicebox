@@ -274,6 +274,13 @@ async function getPostById(postId) {
       [postId]
     );
 
+    if (!post) {
+      throw {
+        name: "PostNotFoundError",
+        message: "No matching post was found with the Post ID"
+      }
+    }
+
     const { rows: tags } = await pool.query(
       `
       SELECT tags.*

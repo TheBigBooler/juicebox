@@ -22,7 +22,20 @@ tagsRouter.get('/:tagName/posts', async (req, res, next) => {
     const { tagName } = req.params
     
     try {
-        const postsWithTag = await getPostsByTagName(tagName)
+        const allPosts = await getPostsByTagName(tagName)
+
+        const postsWithTag = allPosts.filter(post => {
+            if (post.active) {
+              return true;
+            }
+            if (req.user && post.author.id == req.user.id) {
+              return true;
+            }
+
+            return false;
+        })
+
+
         if (postsWithTag && postsWithTag.length > 0) {
         res.send(postsWithTag) 
     } else {
