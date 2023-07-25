@@ -335,7 +335,7 @@ async function getPostsByTagName(tagName) {
 const getAllTags = async () => {
   try {
     const { rows } = await pool.query(`
-    SELECT * FROM tags`);
+    SELECT * FROM tags;`);
 
     return rows;
   } catch (error) {
